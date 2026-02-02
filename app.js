@@ -10,8 +10,8 @@ import reviews from './routes/review.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-const mongo_URL = 'mongodb://127.0.0.1:27017/airbnb';
-const port = 8080;
+const mongo_URL = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/BookMyStay';
+const port = process.env.PORT || 8080;
 
 app.engine('ejs', ejsMate);
 app.set("view engine" , "ejs");
@@ -58,3 +58,5 @@ app.use((err, req, res, next) => {
     const { status = 500, message = "Internal Server Error" } = err;
     res.status(status).render("error.ejs", {message});
 });
+
+export default app;

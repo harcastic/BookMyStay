@@ -41,3 +41,29 @@ build/
 *.tmp
 temp/
 tmp/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Process files
+*.pid
+pids/
+
+# Certificates and keys
+*.pem
+*.key
+
+# IDE specific files
+*.sublime-workspace
+*.sublime-project
+
+# OS specific backups
+*.bak
+
+# Optional REPL history
+.node_repl_history
+
+# Cache directories
+.cache/
+.turbo/
