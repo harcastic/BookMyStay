@@ -22,18 +22,27 @@ app.use(express.static(path.join(__dirname, "/public")));
 
 mongoose.set('bufferCommands', false);
 
-//port-server connextion 
-main()
-    .then(()=>{
+// Initialize database connection
+let dbConnected = false;
+const connectDB = async () => {
+    if (dbConnected) return;
+    try {
+        await mongoose.connect(mongo_URL);
+        dbConnected = true;
         console.log("connection established successfully");
-        app.listen(port, ()=>{
-            console.log(`port is listening on ${port}`)
-        })
-    })
-    .catch((err)=>{
+    } catch (err) {
         console.log(`error : ${err}`);
     }
-)
+};
+
+// Only start server locally, not in Vercel
+if (process.env.NODE_ENV !== 'production') {
+    connectDB().then(() => {
+        app.listen(port, () => {
+            console.log(`port is listening on ${port}`);
+        });
+    });
+}
 
 // database connection 
 async function main() {
@@ -41,6 +50,12 @@ async function main() {
 }
 mongoose.connection.on("connected", () => {
   console.log("Connected to:", mongoose.connection.name);
+});
+
+// Ensure DB connects on each Vercel request
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
 });
 
 
