@@ -1,0 +1,27 @@
+{
+  "name": "airbnb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "connect-flash": "^0.1.1",
+    "dirname": "^0.1.0",
+    "dirname-filename-esm": "^1.1.2",
+    "ejs": "^3.1.10",
+    "ejs-mate": "^4.0.0",
+    "express": "^5.1.0",
+    "express-session": "^1.19.0",
+    "joi": "^18.0.2",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.19.2",
+    "path": "^0.12.7",
+    "path.join": "^1.0.0"
+  }
+}
