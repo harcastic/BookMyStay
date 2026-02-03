@@ -47,7 +47,8 @@ mongoose.connection.on("connected", () => {
 
 //Main Route
 app.get("/", (req, res)=>{
-    res.send("root site");
+    res.redirect("/listings");
+    
 })
 
 //Routes 
