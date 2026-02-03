@@ -23,39 +23,25 @@ app.use(express.static(path.join(__dirname, "/public")));
 mongoose.set('bufferCommands', false);
 
 // Initialize database connection
-let dbConnected = false;
 const connectDB = async () => {
-    if (dbConnected) return;
     try {
         await mongoose.connect(mongo_URL);
-        dbConnected = true;
         console.log("connection established successfully");
     } catch (err) {
         console.log(`error : ${err}`);
+        setTimeout(connectDB, 5000);
     }
 };
 
-// Only start server locally, not in Vercel
-if (process.env.NODE_ENV !== 'production') {
-    connectDB().then(() => {
-        app.listen(port, () => {
-            console.log(`port is listening on ${port}`);
-        });
+// Connect to MongoDB and start server
+connectDB().then(() => {
+    app.listen(port, '0.0.0.0', () => {
+        console.log(`port is listening on ${port}`);
     });
-}
-
-// database connection 
-async function main() {
-    await mongoose.connect(mongo_URL);
-}
-mongoose.connection.on("connected", () => {
-  console.log("Connected to:", mongoose.connection.name);
 });
 
-// Ensure DB connects on each Vercel request
-app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+mongoose.connection.on("connected", () => {
+  console.log("Connected to:", mongoose.connection.name);
 });
 
 
