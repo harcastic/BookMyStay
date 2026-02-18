@@ -82,8 +82,8 @@ mongoose.connection.on("connected", () => {
 
 //Main Route
 app.get("/", (req, res)=>{
-    // res.redirect("/listings");
-    res.send("home page");
+    res.redirect("/listings");
+    // res.send("home page");
     
 })
 
