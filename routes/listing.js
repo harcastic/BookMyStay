@@ -3,8 +3,9 @@ import wrapAsync from '../utils/wrapAsync.js';
 import ExpressError from '../utils/ExpressError.js';
 import { listSchema, revSchema } from "../schema.js";
 import Listing from '../models/listing.js';
+import User from '../models/user.js';
 const router = express.Router();
-
+import isLoggedin  from '../middleware.js';
 
 //Server-side validation
 const validateListing = ( req, res, next )=>{
@@ -26,16 +27,17 @@ router.get("/", wrapAsync( async (req, res) => {
 }));
 
 //New Route
-router.get("/new", (req, res)=>{
-    res.render("listings/new");
+router.get("/new", isLoggedin, (req, res)=>{
+    res.render("listings/new.ejs");
 })
 
 //Create Route
-router.post("/", validateListing,  wrapAsync( async (req,res, next)=>{
+router.post("/", validateListing, isLoggedin, wrapAsync( async (req,res, next)=>{
         const {title, description, image, price , location, country} = req.body.listing;
         // store image as an object consistent with the schema
         let newListing = new Listing({title, description, image: { url: image }, price , location, country});
         await newListing.save();
+        req.flash("success", "New Listing Created!");
         console.log(newListing);
         res.redirect("/listings");
     }
@@ -45,18 +47,26 @@ router.post("/", validateListing,  wrapAsync( async (req,res, next)=>{
 router.get("/:id", wrapAsync( async (req, res) =>{
     let {id} = req.params;
     const listing =  await Listing.findById(id).populate("reviews");
+    if(!listing) {
+        req.flash("error", "Listing not found");
+        return res.redirect("/listings");  
+    }
     res.render("listings/show", {listing});
 }))
 
 //Edit Route
-router.get("/:id/edit", validateListing, wrapAsync(async (req,res) => {
+router.get("/:id/edit", validateListing, isLoggedin, wrapAsync(async (req,res) => {
     let {id} = req.params;
-    const listing =  await Listing.findById(id);
+    const listing =  await Listing.findById(id); 
+    if(!listing) {
+        req.flash("error", "Listing not found");
+        return res.redirect("/listings");  
+    }
     res.render("listings/edit",{listing});
 }))
 
 //update Route
-router.put("/:id", validateListing, wrapAsync(async (req, res) => {
+router.put("/:id", validateListing, isLoggedin, wrapAsync(async (req, res) => {
     const {id} = req.params;
     const { title, description, image, price, location, country } = req.body.listing;
     const updateData = { title, description, price, location, country };
@@ -70,14 +80,16 @@ router.put("/:id", validateListing, wrapAsync(async (req, res) => {
       runValidators: true
     });
     console.log(req.body);
+    req.flash("success", "Listing details updated!");
     res.redirect(`/listings/${id}`);
 }))
 
 //Delete Route
-router.delete("/:id", wrapAsync(async (req, res) => {
+router.delete("/:id", isLoggedin ,wrapAsync(async (req, res) => {
     let {id} = req.params;
     let deletedListing = await Listing.findByIdAndDelete(id);
     console.log(deletedListing);
+    req.flash("success", "Listing Deleted Successfully!");
     res.redirect('/listings'); 
 }))
 

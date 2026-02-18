@@ -1,5 +1,5 @@
 {
-  "name": "airbnb",
+  "name": "BookMyStay",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -27,6 +27,9 @@
     "joi": "^18.0.2",
     "method-override": "^3.0.0",
     "mongoose": "^8.19.2",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "passport-local-mongoose": "^9.0.1",
     "path": "^0.12.7",
     "path.join": "^1.0.0"
   }

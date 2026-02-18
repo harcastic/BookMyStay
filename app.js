@@ -4,8 +4,15 @@ import path from 'path';
 import { fileURLToPath } from "url";
 import methodOverride from 'method-override';
 import ejsMate from 'ejs-mate';
-import listings from './routes/listing.js';
-import reviews from './routes/review.js';
+import listingRouters from './routes/listing.js';
+import reviewRouters from './routes/review.js';
+import userRouter from './routes/user.js';
+import session  from 'express-session';
+import flash from 'connect-flash';
+import passport from 'passport';
+import LocalStrategy from 'passport-local';
+import User from './models/user.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +26,34 @@ app.set("views" , path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, "/public")));
+
+const sessionOptions = {
+    secret : "MySecretkey4kj5djhs5",
+    resave : false,
+    saveUninitialized : true ,
+    cookie : {
+        expires : Date.now() + 7 * 24 * 60 * 60 * 1000,
+        maxAge :  7 * 24 * 60 * 60 * 1000,
+        httpOnly : true,
+    } ,
+}
+app.use(session(sessionOptions));
+app.use(flash());
+
+// PASSPORT MIDDLEWARE
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+// FLASH MIDDLEWARE
+app.use((req, res, next)=>{
+    res.locals.success = req.flash("success");
+    res.locals.error = req.flash("error");
+    res.locals.currUser = req.user;
+    next();
+})
 
 mongoose.set('bufferCommands', false);
 
@@ -47,13 +82,15 @@ mongoose.connection.on("connected", () => {
 
 //Main Route
 app.get("/", (req, res)=>{
-    res.redirect("/listings");
+    // res.redirect("/listings");
+    res.send("home page");
     
 })
 
 //Routes 
-app.use("/listings", listings);
-app.use("/listings/:id/reviews", reviews);
+app.use("/listings", listingRouters);
+app.use("/listings/:id/reviews", reviewRouters);
+app.use("/", userRouter);
 
 // Error Handling
 app.use((err, req, res, next) => {
