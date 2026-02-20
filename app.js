@@ -13,6 +13,9 @@ import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import User from './models/user.js';
 
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

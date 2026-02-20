@@ -14,7 +14,7 @@ async function main() {
     console.log("connected to DB");
 
     await Listing.deleteMany({});
-    initData.data = initData.data.map((obj)=> ({...obj, owner : "69954b1ee190da7a935bc08a"}));
+    initData.data = initData.data.map((obj)=> ({...obj, owner : "6998cd4a8bed34c32fb216db"}));
     await Listing.insertMany(initData.data);
     console.log("data was added succesfully");
     
