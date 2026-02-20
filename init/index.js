@@ -6,14 +6,15 @@ import initData from "./data.js";
 import Listing  from '../models/listing.js';
 
 const mongo_URL = 'mongodb://127.0.0.1:27017/BookMyStay';
-// const mongo_URL = process.env.MONGODB_URI;
+// const mongo_URL = process.env.MONGODB_URI; 
 console.log("MONGODB_URI =", process.env.MONGODB_URI);
+
 async function main() {
     await mongoose.connect(mongo_URL);
     console.log("connected to DB");
 
     await Listing.deleteMany({});
-    // initData.data = initData.data.map((obj)=> ({...obj, owner : "69954b1ee190da7a935bc08a"}));
+    initData.data = initData.data.map((obj)=> ({...obj, owner : "69954b1ee190da7a935bc08a"}));
     await Listing.insertMany(initData.data);
     console.log("data was added succesfully");
     
