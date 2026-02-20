@@ -1,7 +1,7 @@
 import ExpressError from './utils/ExpressError.js';
-import wrapAsync from './utils/wrapAsync.js';
 import { listSchema, revSchema } from "./schema.js";
 import Listing from './models/listing.js';
+import Review from './models/review.js';
 
 const isLoggedin = (req, res, next) => {
     if(!req.isAuthenticated()){
@@ -42,4 +42,26 @@ export const validateListing = ( req, res, next )=>{
     }else{
         next();
     }
+}
+
+//Server-Side Validation
+export const validateReview = (req, res , next )=>{
+    let { error } = revSchema.validate(req.body);
+    if(error){
+        let msg = error.details.map((el)=> el.message).join(",");
+        throw new ExpressError(400, msg);   
+    }else{
+        next();
+    }
+}
+
+//isAuthor 
+export const isAuthor = async (req, res, next) =>{
+    let {id, reviewId} = req.params;
+    let revId = await Review.findById(reviewId);
+    if(!revId.author.equals(res.locals.currUser._id)){
+        req.flash("error", "You're not authorized to delete this review!");
+        return res.redirect(`/listings/${id}`);
+    }
+    next();
 }
