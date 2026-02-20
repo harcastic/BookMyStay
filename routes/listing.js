@@ -1,22 +1,12 @@
 import express from 'express';
-import wrapAsync from '../utils/wrapAsync.js';
-import ExpressError from '../utils/ExpressError.js';
-import { listSchema, revSchema } from "../schema.js";
+import wrapAsync from '../utils/wrapAsync.js'; 
 import Listing from '../models/listing.js';
-import User from '../models/user.js';
-const router = express.Router();
-import isLoggedin  from '../middleware.js';
+import { validateListing } from '../middleware.js';
 
-//Server-side validation
-const validateListing = ( req, res, next )=>{
-    let { error } = listSchema.validate(req.body);
-    if(error){
-        let errMsg = error.details.map((el) =>el.message).join(",");
-        throw new ExpressError( 400,  errMsg);
-    }else{
-        next();
-    }
-}
+const router = express.Router();
+import isLoggedin, { isOwner }  from '../middleware.js';
+
+
 
 //Index Route
 router.get("/", wrapAsync( async (req, res) => {
@@ -36,6 +26,7 @@ router.post("/", validateListing, isLoggedin, wrapAsync( async (req,res, next)=>
         const {title, description, image, price , location, country} = req.body.listing;
         // store image as an object consistent with the schema
         let newListing = new Listing({title, description, image: { url: image }, price , location, country});
+        newListing.owner = req.user._id;
         await newListing.save();
         req.flash("success", "New Listing Created!");
         console.log(newListing);
@@ -46,7 +37,7 @@ router.post("/", validateListing, isLoggedin, wrapAsync( async (req,res, next)=>
 //Show Route
 router.get("/:id", wrapAsync( async (req, res) =>{
     let {id} = req.params;
-    const listing =  await Listing.findById(id).populate("reviews");
+    const listing =  await Listing.findById(id).populate("reviews").populate("owner");
     if(!listing) {
         req.flash("error", "Listing not found");
         return res.redirect("/listings");  
@@ -55,7 +46,7 @@ router.get("/:id", wrapAsync( async (req, res) =>{
 }))
 
 //Edit Route
-router.get("/:id/edit", validateListing, isLoggedin, wrapAsync(async (req,res) => {
+router.get("/:id/edit", validateListing, isLoggedin, isOwner, wrapAsync(async (req,res) => {
     let {id} = req.params;
     const listing =  await Listing.findById(id); 
     if(!listing) {
@@ -66,7 +57,7 @@ router.get("/:id/edit", validateListing, isLoggedin, wrapAsync(async (req,res) =
 }))
 
 //update Route
-router.put("/:id", validateListing, isLoggedin, wrapAsync(async (req, res) => {
+router.put("/:id", validateListing, isLoggedin, isOwner, wrapAsync(async (req, res) => {
     const {id} = req.params;
     const { title, description, image, price, location, country } = req.body.listing;
     const updateData = { title, description, price, location, country };
@@ -74,7 +65,6 @@ router.put("/:id", validateListing, isLoggedin, wrapAsync(async (req, res) => {
     if (image) {
       updateData.image = { url: image };
     }
-
     await Listing.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true
@@ -85,7 +75,7 @@ router.put("/:id", validateListing, isLoggedin, wrapAsync(async (req, res) => {
 }))
 
 //Delete Route
-router.delete("/:id", isLoggedin ,wrapAsync(async (req, res) => {
+router.delete("/:id", isLoggedin, isOwner, wrapAsync(async (req, res) => {
     let {id} = req.params;
     let deletedListing = await Listing.findByIdAndDelete(id);
     console.log(deletedListing);

@@ -1,5 +1,9 @@
+import ExpressError from './utils/ExpressError.js';
+import wrapAsync from './utils/wrapAsync.js';
+import { listSchema, revSchema } from "./schema.js";
+import Listing from './models/listing.js';
+
 const isLoggedin = (req, res, next) => {
-    // console.log(req.user);
     if(!req.isAuthenticated()){
         req.session.redirectURL = req.originalUrl;
         req.flash("error", "User not login!");  
@@ -7,6 +11,7 @@ const isLoggedin = (req, res, next) => {
     }
     next();
 }
+export default isLoggedin;
 
 export const redirectURL = (req, res, next)=>{
 
@@ -15,5 +20,26 @@ export const redirectURL = (req, res, next)=>{
     }
     next();
 }
-// export  redirectURL;
-export default isLoggedin;
+
+
+export const isOwner = async (req, res, next) =>{
+    let {id} = req.params;
+    let list = await Listing.findById(id);
+    if(!list.owner.equals(res.locals.currUser._id)){
+        req.flash("error", "You're not authorized to perfrom this action!");
+        return res.redirect(`/listings/${id}`);
+    }
+    next();
+}
+
+
+//Server-side validation
+export const validateListing = ( req, res, next )=>{
+    let { error } = listSchema.validate(req.body);
+    if(error){
+        let errMsg = error.details.map((el) =>el.message).join(",");
+        throw new ExpressError( 400,  errMsg);
+    }else{
+        next();
+    }
+}
