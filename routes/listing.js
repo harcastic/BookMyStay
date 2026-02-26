@@ -1,87 +1,64 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import upload from '../cloudConfig.js';
 import express from 'express';
 import wrapAsync from '../utils/wrapAsync.js'; 
-import Listing from '../models/listing.js';
 import { validateListing } from '../middleware.js';
+import index, { createListing, destroyListing, editListing, newFrom, showListing, updateListing } from '../controllers/listingsController.js';
 
+// const upload = multer({storage});
 const router = express.Router();
 import isLoggedin, { isOwner }  from '../middleware.js';
 
 
-
 //Index Route
-router.get("/", wrapAsync( async (req, res) => {
-  console.log("Fetching listings...");
-  const allListings = await Listing.find({});
-  console.log("Got listings:", allListings.length);
-  res.render("listings/index.ejs", { allListings });
-}));
+router.get("/", wrapAsync(index));
 
 //New Route
-router.get("/new", isLoggedin, (req, res)=>{
-    res.render("listings/new.ejs");
-})
+router.get("/new", isLoggedin, newFrom);
 
 //Create Route
-router.post("/", validateListing, isLoggedin, wrapAsync( async (req,res, next)=>{
-        const {title, description, image, price , location, country} = req.body.listing;
-        // store image as an object consistent with the schema
-        let newListing = new Listing({title, description, image: { url: image }, price , location, country});
-        newListing.owner = req.user._id;
-        await newListing.save();
-        req.flash("success", "New Listing Created!");
-        console.log(newListing);
-        res.redirect("/listings");
-    }
-)); 
+router.post("/", isLoggedin, validateListing, (req, res, next) => { 
+    console.log("=== UPLOAD REQUEST ===");
+    console.log("Body before upload:", req.body);
+    
+    upload.single("listing[image]")(req, res, (err) => {
+        console.log("After upload - File:", req.file);
+        console.log("After upload - Body:", req.body);
+        
+        if (err) {
+            console.error("Upload error:", err);
+            req.flash("error", "Image upload error: " + err.message);
+            return res.redirect("/listings/new");
+        }
+        next();
+    });
+},  wrapAsync(createListing)); 
 
 //Show Route
-router.get("/:id", wrapAsync( async (req, res) =>{
-    let {id} = req.params;
-    const listing =  await Listing.findById(id).populate({path : "reviews", populate :{path :"author"}}).populate("owner");
-    if(!listing) {
-        req.flash("error", "Listing not found");
-        return res.redirect("/listings");  
-    }
-    res.render("listings/show", {listing});
-}))
+router.get("/:id", wrapAsync( showListing));
 
 //Edit Route
-router.get("/:id/edit", validateListing, isLoggedin, isOwner, wrapAsync(async (req,res) => {
-    let {id} = req.params;
-    const listing =  await Listing.findById(id); 
-    if(!listing) {
-        req.flash("error", "Listing not found");
-        return res.redirect("/listings");  
-    }
-    res.render("listings/edit",{listing});
-}))
+router.get("/:id/edit", isLoggedin, isOwner, wrapAsync(editListing));
 
 //update Route
-router.put("/:id", validateListing, isLoggedin, isOwner, wrapAsync(async (req, res) => {
-    const {id} = req.params;
-    const { title, description, image, price, location, country } = req.body.listing;
-    const updateData = { title, description, price, location, country };
-
-    if (image) {
-      updateData.image = { url: image };
-    }
-    await Listing.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true
+router.put("/:id", validateListing, isLoggedin, isOwner, (req, res, next)=>{
+    upload.single("listing[image]")(req, res, (err) => {
+        console.log("After Edit - File:", req.file);
+        console.log("After Edit - Body:", req.body);
+        
+        if (err) {
+            console.error("Upload error:", err);
+            req.flash("error", "Image upload error: " + err.message);
+            return res.redirect("/listings/new");
+        }
+        next();
     });
-    console.log(req.body);
-    req.flash("success", "Listing details updated!");
-    res.redirect(`/listings/${id}`);
-}))
+    
+},wrapAsync(updateListing));
 
 //Delete Route
-router.delete("/:id", isLoggedin, isOwner, wrapAsync(async (req, res) => {
-    let {id} = req.params;
-    let deletedListing = await Listing.findByIdAndDelete(id);
-    console.log(deletedListing);
-    req.flash("success", "Listing Deleted Successfully!");
-    res.redirect('/listings'); 
-}))
-
+router.delete("/:id", isLoggedin, isOwner, wrapAsync(destroyListing));
 
 export default router;

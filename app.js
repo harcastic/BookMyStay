@@ -1,10 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import router from './routes/listing.js';
 import express from 'express';
 import mongoose  from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from "url";
 import methodOverride from 'method-override';
 import ejsMate from 'ejs-mate';
-import listingRouters from './routes/listing.js';
+
 import reviewRouters from './routes/review.js';
 import userRouter from './routes/user.js';
 import session  from 'express-session';
@@ -12,10 +16,6 @@ import flash from 'connect-flash';
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import User from './models/user.js';
-
-import dotenv from "dotenv";
-dotenv.config();
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,12 +91,18 @@ app.get("/", (req, res)=>{
 })
 
 //Routes 
-app.use("/listings", listingRouters);
+app.use("/listings", router);
 app.use("/listings/:id/reviews", reviewRouters);
 app.use("/", userRouter);
 
 // Error Handling
 app.use((err, req, res, next) => {
+    console.error("=== ERROR DETAILS ===");
+    console.error("Message:", err.message);
+    console.error("Stack:", err.stack);
+    console.error("Status:", err.status);
+    console.error("====================");
+    
     const { status = 500, message = "Internal Server Error" } = err;
     res.status(status).render("error.ejs", {message});
 });

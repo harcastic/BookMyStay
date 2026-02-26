@@ -14,7 +14,8 @@ async function main() {
     console.log("connected to DB");
 
     await Listing.deleteMany({});
-    initData.data = initData.data.map((obj)=> ({...obj, owner : "6998cd4a8bed34c32fb216db"}));
+    // initData.data = initData.data.map((obj)=> ({...obj, owner : "6998cd4a8bed34c32fb216db"})); // Atlas seed
+    initData.data = initData.data.map((obj)=> ({...obj, owner : "6998ce69646808ce7eaa40cc"})); // Local machine seed
     await Listing.insertMany(initData.data);
     console.log("data was added succesfully");
     

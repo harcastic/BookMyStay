@@ -1,54 +1,20 @@
 import express from 'express';
-import User from '../models/user.js';
 import wrapAsync from '../utils/wrapAsync.js';
 import passport from 'passport';
 import { redirectURL } from '../middleware.js';
-// import { redirectURL  from '../middleware.js';
+import signUp, { getLogout, loginRoute, postLogin, postSignUp } from '../controllers/userController.js'
+
+
 const router = express.Router();
 
-router.get("/signup" , (req, res)=>{
-    res.render("users/signup.ejs");
-});
+router.get("/signup" , signUp);
 
-router.post("/signup", wrapAsync( async (req, res, next) => {
-    try {
-        let { username, email, password } = req.body;
+router.post("/signup", wrapAsync( postSignUp ));
 
-        const newUser = new User({ email, username });
-        const registeredUser = await User.register(newUser, password);
+router.get("/login", loginRoute);
 
-        req.login(registeredUser, (err) => {
-            if (err) return next(err);
-            req.flash("success", "Welcome to BookMyStay");
-            res.redirect("/listings");
-        });
+router.post("/login",  redirectURL, passport.authenticate("local", {failureRedirect: "/login" , failureFlash : true}) , postLogin);
 
-    } catch (error) {
-        req.flash("error", error.message);
-        res.redirect("/signup");
-    }
-}));
-
-
-router.get("/login", (req, res)=>{
-    res.render("users/login.ejs");
-})
-
-router.post("/login",  redirectURL, passport.authenticate("local", {failureRedirect: "/login" , failureFlash : true}) , async(req,res)=>{
-    req.flash("success" , "Welcome to BookMyStay"); 
-    let redirectRoute = res.locals.redirectRoute || "/listings";
-    res.redirect(redirectRoute);
-});
-
-
-router.get("/logout", (req, res, next)=>{
-    req.logout((err)=>{
-        if(err){
-            return next(err);
-        }
-        req.flash("success", "logged out successfully");
-        res.redirect("/listings");
-    })
-})
+router.get("/logout", getLogout);
 
 export  default router;  
